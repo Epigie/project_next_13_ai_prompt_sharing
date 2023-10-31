@@ -1,0 +1,134 @@
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useReducer,
+  useMemo,
+} from "react";
+// resources
+import { getInfo, logout } from "../api/user";
+import authStorage from "./storage";
+import {
+  SessionProvider,
+  signIn,
+  signOut,
+  SessionContext,
+  useSession,
+  getSession,
+} from "next-auth/react";
+
+const initialState = {
+  user: null,
+  loading: true,
+};
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    case "SET_USER":
+      return {
+        ...state,
+        user: action.payload,
+      };
+    case "SET_LOADING":
+      return {
+        ...state,
+        loading: action.payload,
+      };
+    case "CLEAR_AUTH":
+      return {
+        user: null,
+        loading: false,
+      };
+    default:
+      return state;
+  }
+};
+
+const AuthContext = SessionContext();
+
+export const AuthProvider = ({ children }) => {
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  const logIn = useCallback(async (data) => {
+    let user = {};
+
+    user.id = data?.id;
+    user.colorcode = data?.colorcode;
+    user.role = data?.role;
+    user.email = data?.email;
+    user.phone = data?.phone;
+    user.avatar = data?.avatar;
+    user.color_mode = data?.color_mode;
+
+    const { token } = data;
+
+    if (token?.type === "Bearer") {
+      const tokenValue = token?.value;
+      authStorage.storeToken(tokenValue);
+    }
+    dispatch({ type: "SET_USER", payload: user });
+  }, []);
+
+  const logOut = useCallback(async () => {
+    await logout();
+    authStorage.removeToken();
+    dispatch({ type: "CLEAR_AUTH" });
+  }, []);
+
+  const getMe = useCallback(async () => {
+    try {
+      const token = authStorage.getToken();
+      if (!token) {
+        dispatch({ type: "SET_LOADING", payload: false });
+        return;
+      }
+      const response = await getInfo();
+      const user = response?.data;
+      dispatch({ type: "SET_USER", payload: user });
+    } catch (error) {
+      console.error("Error getting user:", error);
+    } finally {
+      dispatch({ type: "SET_LOADING", payload: false });
+    }
+  }, []);
+
+  useEffect(() => {
+    getMe();
+  }, []);
+
+  useEffect(() => {
+    const checkLoggedIn = async () => {
+      const token = authStorage.getToken();
+      if (token && !state.user) {
+        try {
+          const response = await getInfo();
+          const user = response.data;
+          dispatch({ type: "SET_USER", payload: user });
+        } catch (error) {
+          console.error("Error getting user data:", error);
+        }
+      }
+    };
+
+    checkLoggedIn();
+  }, [state.user]);
+
+  const value = useMemo(() => {
+    const { user, loading } = state;
+    const isLoggedIn = !!user;
+    return {
+      user,
+      logIn,
+      logOut,
+      loading,
+      isLoggedIn,
+    };
+  }, [state]);
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export const useAuth = () => {
+  return useContext(AuthContext);
+};

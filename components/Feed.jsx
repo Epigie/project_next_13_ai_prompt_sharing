@@ -1,94 +1,150 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { IoFilter, IoFilterCircleOutline, IoSearch } from "react-icons/io5";
+import HospitalCardList from "./HospitalCardList";
+import { convertKmToMiles, finderApi, calculateDistance } from "@utils";
+import Slider from "react-input-slider";
 
-import PromptCard from "./PromptCard";
+const LOCATIONS = ["New York", "Washington", "Queens"];
 
-const PromptCardList = ({ data, handleTagClick }) => {
-  return (
-    <div className='mt-16 prompt_layout'>
-      {data.map((post) => (
-        <PromptCard
-          key={post._id}
-          post={post}
-          handleTagClick={handleTagClick}
-        />
-      ))}
-    </div>
-  );
-};
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const Feed = () => {
-  const [allPosts, setAllPosts] = useState([]);
-
-  // Search states
+  const [allHospitals, setAllHospitals] = useState([]);
+  const [distance, setDistance] = useState(0);
+  const distanceInMiles = convertKmToMiles(distance);
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [useFilters, setUseFilters] = useState(true);
   const [searchText, setSearchText] = useState("");
-  const [searchTimeout, setSearchTimeout] = useState(null);
   const [searchedResults, setSearchedResults] = useState([]);
 
-  const fetchPosts = async () => {
-    const response = await fetch("/api/prompt");
-    const data = await response.json();
-
-    setAllPosts(data);
-  };
-
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    const fetchHospitals = async () => {
+      try {
+        if (searchText !== "" && searchText.length > 3) {
+          // Fetch hospitals from your backend using the 'fetch' API
+          const response = await fetch(
+            `${apiUrl}/api/finder?q=${
+              selectedLocation
+                ? searchText + " " + selectedLocation
+                : searchText
+            }`
+          );
+          if (!response.status !== "ok") {
+            throw new Error("Network response was not ok");
+          }
+          const data = await response.json();
 
-  const filterPrompts = (searchtext) => {
-    const regex = new RegExp(searchtext, "i"); // 'i' flag for case-insensitive search
-    return allPosts.filter(
-      (item) =>
-        regex.test(item.creator.username) ||
-        regex.test(item.tag) ||
-        regex.test(item.prompt)
-    );
-  };
+          // Calculate distance for each hospital and filter by distance
+          const filteredHospitals = data
+            .filter((hospital) => {
+              // Use your distance calculation algorithm here
+              const hospitalDistance = calculateDistance(
+                selectedLocation, // Use selected location here
+                hospital.location // Assuming location is an object with latitude and longitude
+              );
+              return hospitalDistance <= distance;
+            })
+            .sort((a, b) => b.featured - a.featured); // Prioritize featured hospitals
 
-  const handleSearchChange = (e) => {
-    clearTimeout(searchTimeout);
+          setAllHospitals(filteredHospitals);
+        }
+      } catch (error) {
+        console.error("Error fetching hospitals:", error);
+      }
+    };
+
+    fetchHospitals();
+  }, [searchText, selectedLocation, distance]);
+
+  const handleSearchClick = (e) => {
     setSearchText(e.target.value);
-
-    // debounce method
-    setSearchTimeout(
-      setTimeout(() => {
-        const searchResult = filterPrompts(e.target.value);
-        setSearchedResults(searchResult);
-      }, 500)
-    );
-  };
-
-  const handleTagClick = (tagName) => {
-    setSearchText(tagName);
-
-    const searchResult = filterPrompts(tagName);
-    setSearchedResults(searchResult);
   };
 
   return (
-    <section className='feed'>
-      <form className='relative w-full flex-center'>
-        <input
-          type='text'
-          placeholder='Search for a tag or a username'
-          value={searchText}
-          onChange={handleSearchChange}
-          required
-          className='search_input peer'
-        />
+    <section className="feed">
+      <form className="relative flex flex-col self-center w-full md:w-4/5 lg:w-1/2 xl:w-1/2">
+        <div className="flex w-full space-x-4">
+          <div
+            className={`mx-2 p-2.5 rounded-md cursor-pointer ${
+              useFilters ? "bg-purple-500" : " bg-white"
+            }`}
+            onClick={() => setUseFilters(!useFilters)}
+          >
+            {useFilters ? (
+              <IoFilter className={`text-xl text-white`} />
+            ) : (
+              <IoFilterCircleOutline className={`text-xl text-purple-500`} />
+            )}
+          </div>
+
+          <input
+            type="text"
+            placeholder="Search by hospital name or specialisation"
+            value={searchText}
+            // onChange={handleSearchClick}
+            required
+            className="search_input peer"
+          />
+
+          {/* Search button */}
+          <button
+            onClick={handleSearchClick}
+            className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-700 cursor-pointer"
+          >
+            <IoSearch className={`text-xl text-purple-500`} />
+          </button>
+
+          <div className="flex-shrink-0 hidden h-full overflow-hidden lg:flex">
+            <select
+              value={selectedLocation}
+              onChange={(e) => setSelectedLocation(e.target.value)}
+              className="flex w-full border-gray-100 rounded-lg shadow-lg outline-0 active:outline-0"
+            >
+              <option value="">Select location</option>
+              {LOCATIONS.map((location) => (
+                <option key={location} value={location}>
+                  {location}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="flex flex-shrink-0 mt-4 overflow-hidden h-min lg:hidden">
+          <select
+            value={selectedLocation}
+            onChange={(e) => setSelectedLocation(e.target.value)}
+            className="flex w-full px-2 py-2 border-gray-100 rounded-lg shadow-lg outline-0 active:outline-0"
+          >
+            <option value="">Select location</option>
+            {LOCATIONS.map((location) => (
+              <option key={location} value={location} className="">
+                {location}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex items-center self-center justify-center py-4 space-x-4">
+          <p className="flex flex-grow-0 text-2xl font-semibold">{`Distance: ${distanceInMiles} miles (${distance} kM)`}</p>
+
+          <div className="flex flex-1 w-full pt-1">
+            <Slider
+              axis="x"
+              xstep={1}
+              xmin={0}
+              xmax={100}
+              x={distance}
+              onChange={({ x }) => setDistance(x)}
+              styles={{}}
+            />
+          </div>
+        </div>
       </form>
 
-      {/* All Prompts */}
-      {searchText ? (
-        <PromptCardList
-          data={searchedResults}
-          handleTagClick={handleTagClick}
-        />
-      ) : (
-        <PromptCardList data={allPosts} handleTagClick={handleTagClick} />
-      )}
+      {searchedResults && <HospitalCardList hospitals={searchedResults} />}
     </section>
   );
 };

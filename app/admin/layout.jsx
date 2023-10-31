@@ -8,7 +8,7 @@ export const metadata = {
   description: "Discover Specialised Hospitals worldwide",
 };
 
-const RootLayout = ({ children }) => (
+const AdminRootLayout = ({ children }) => (
   <html lang="en">
     <body className="flex w-screen h-screen">
       <Provider>
@@ -25,4 +25,4 @@ const RootLayout = ({ children }) => (
   </html>
 );
 
-export default RootLayout;
+export default AdminRootLayout;
