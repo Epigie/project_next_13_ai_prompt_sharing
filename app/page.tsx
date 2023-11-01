@@ -1,4 +1,4 @@
-import Feed from "@components/Feed";
+import Finder from "@components/Finder";
 
 const Home = () => (
   <section className="flex-col w-full flex-center">
@@ -12,7 +12,7 @@ const Home = () => (
       with ease
     </p>
 
-    <Feed />
+    <Finder />
   </section>
 );
 

@@ -1,3 +1,4 @@
+"use client";
 import HospitalCard from "./HospitalCard";
 
 interface HospitalCardListProps {
@@ -6,11 +7,11 @@ interface HospitalCardListProps {
 
 const HospitalCardList = ({ hospitals }: HospitalCardListProps) => {
   return (
-    <div className="hospital_layout">
+    <section className="hospital_layout">
       {hospitals?.map((hospital: any) => (
         <HospitalCard key={hospital?.id} hospital={hospital} />
       ))}
-    </div>
+    </section>
   );
 };
 

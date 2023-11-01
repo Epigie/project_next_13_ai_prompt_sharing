@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useSession } from "next-auth/react";
+import React, { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
-const Form = ({ type }) => {
+interface FormProps {
+  type: string;
+}
+
+const Form = ({ type }: FormProps) => {
   const router = useRouter();
-  const { data: session } = useSession();
 
   const [submitting, setIsSubmitting] = useState(false);
   const [hospital, setHospital] = useState({
@@ -20,7 +22,7 @@ const Form = ({ type }) => {
     picture: "",
   });
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -35,7 +37,6 @@ const Form = ({ type }) => {
           location: hospital?.location,
           description: hospital?.description,
           specialisations: hospital?.specialisations,
-          userId: session?.user.id,
         }),
       });
 
@@ -90,7 +91,7 @@ const Form = ({ type }) => {
               <input
                 value={hospital?.phone}
                 onChange={(e) =>
-                  setHospital({ ...hospital, phone: e.target.value })
+                  setHospital({ ...hospital, phone_numbers: e.target.value })
                 }
                 placeholder="Hospital phone"
                 required
@@ -106,7 +107,7 @@ const Form = ({ type }) => {
               <input
                 value={hospital?.email}
                 onChange={(e) =>
-                  setHospital({ ...hospital, email: e.target.value })
+                  setHospital({ ...hospital, emails: e.target.value })
                 }
                 placeholder="Hospital email"
                 required
@@ -122,7 +123,7 @@ const Form = ({ type }) => {
               <input
                 value={hospital?.picture}
                 onChange={(e) =>
-                  setHospital({ ...hospital, email: e.target.value })
+                  setHospital({ ...hospital, picture: e.target.value })
                 }
                 placeholder="Hospital picture"
                 required
@@ -156,9 +157,9 @@ const Form = ({ type }) => {
                 </span>
               </span>
               <input
-                value={hospital?.specialisation}
+                value={hospital?.specialisations}
                 onChange={(e) =>
-                  setHospital({ ...hospital, specialisation: e.target.value })
+                  setHospital({ ...hospital, specialisations: e.target.value })
                 }
                 type="text"
                 placeholder="#Specialisation"

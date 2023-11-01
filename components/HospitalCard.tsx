@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { useSession } from "next-auth/react";
-import { usePathname, useRouter } from "next/navigation";
 import SpecialisationTag from "@components/SpecialisationTag";
 import Link from "next/link";
 
@@ -12,15 +10,18 @@ interface HospitalCardProps {
 }
 
 const HospitalCard = ({ hospital }: HospitalCardProps) => {
-  const pathName = usePathname();
-  const router = useRouter();
-
   const [copied, setCopied] = useState<string | null>(null);
+  const [copyMsg, setCopyMsg] = useState<string | null>(null);
 
   const onCopy = () => {
     setCopied(hospital?.name);
+    setCopyMsg("Copied to clipboard");
     navigator.clipboard.writeText(hospital?.id);
     setCopied(null);
+
+    setTimeout(() => {
+      setCopyMsg(null);
+    }, 2000);
   };
 
   return (
