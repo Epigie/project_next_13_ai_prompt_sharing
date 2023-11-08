@@ -2,10 +2,12 @@
 import HospitalCard from "./HospitalCard";
 
 interface HospitalCardListProps {
-  hospitals: any;
+  hospitalsData: any;
 }
 
-const HospitalCardList = ({ hospitals }: HospitalCardListProps) => {
+const HospitalCardList = ({ hospitalsData }: HospitalCardListProps) => {
+  const hospitals = hospitalsData?.data;
+
   return (
     <section className="hospital_layout">
       {hospitals?.map((hospital: any) => (

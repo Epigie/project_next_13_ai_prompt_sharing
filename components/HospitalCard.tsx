@@ -56,7 +56,7 @@ const HospitalCard = ({ hospital }: HospitalCardProps) => {
             </h3>
 
             <p className="text-sm text-gray-800 font-inter">
-              {hospital?.emails[0]}
+              {hospital?.contact?.emails[0]?.email}
             </p>
           </div>
         </div>
@@ -67,10 +67,18 @@ const HospitalCard = ({ hospital }: HospitalCardProps) => {
               className="flex w-full p-1.5 text-sm font-semibold text-gray-800 bg-gray-100 rounded-md cursor-pointer font-satoshi"
               onClick={onCopy}
             >
-              {hospital?.phone_numbers[0]}
+              {hospital?.contact?.phone_numbers[0]?.phone_number}
             </p>
 
-            <p className="text-sm text-gray-800 font-inter">{`${hospital?.city}, ${hospital?.country}`}</p>
+            <p className="text-sm text-gray-800 font-semibold font-inter">
+              {hospital?.contact?.address?.number && (
+                <span>{hospital?.contact?.address?.number}</span>
+              )}{" "}
+              {hospital?.contact?.address?.street && (
+                <span>{hospital?.contact?.address?.street}</span>
+              )}
+              {`${hospital?.contact?.address?.city}, ${hospital?.contact?.address?.country}.`}
+            </p>
           </div>
         </div>
 
@@ -80,14 +88,12 @@ const HospitalCard = ({ hospital }: HospitalCardProps) => {
           </p>
 
           <div className="flex flex-wrap flex-1 w-full">
-            {hospital?.specialisations?.map(
-              (specialisation: any, index: string) => (
-                <SpecialisationTag
-                  key={index}
-                  specialisation={specialisation}
-                />
-              )
-            )}
+            {hospital?.specialisations?.map((specialisation: any) => (
+              <SpecialisationTag
+                key={specialisation?.id}
+                specialisation={specialisation}
+              />
+            ))}
           </div>
         </div>
       </div>

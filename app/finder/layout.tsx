@@ -14,18 +14,13 @@ interface FinderLayoutProps {
 }
 
 const FinderLayout = ({ children }: FinderLayoutProps) => (
-  <body className="flex w-screen h-screen">
-    {/* <AuthProvider> */}
+  <>
     <section className="main">
       <div className="gradient" />
     </section>
 
-    <main className="app">
-      <Nav />
-      {children}
-    </main>
-    {/* </AuthProvider> */}
-  </body>
+    <main className="app">{children}</main>
+  </>
 );
 
 export default FinderLayout;

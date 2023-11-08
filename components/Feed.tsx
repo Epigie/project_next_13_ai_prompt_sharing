@@ -17,11 +17,18 @@ const findHospitals = async (url: string) => {
       throw new Error("Network response was not ok");
     }
 
-    console.log("response::", response);
-
     const data = await response.json();
-
-    console.log("data::", data);
+    // Calculate distance for each hospital and filter by distance
+    // const filteredHospitals = data
+    //   .filter((hospital) => {
+    //     // Use your distance calculation algorithm here
+    //     const hospitalDistance = calculateDistance(
+    //       selectedLocation, // Use selected location here
+    //       hospital.location // Assuming location is an object with latitude and longitude
+    //     );
+    //     return hospitalDistance <= distance;
+    //   })
+    //   .sort((a, b) => b.featured - a.featured); // Prioritize featured hospitals
     return data;
   } catch (error) {
     console.error("Error fetching hospitals::", error);
@@ -36,11 +43,14 @@ const Feed = () => {
 
   const encodedSearchQuery = encodeURI(searchQuery || "");
 
-  const { data: hospitals, isLoading } = useSWR(
-    `${apiUrl}/api/v1/finder?q=${encodedSearchQuery}`,
-    findHospitals,
-    { revalidateOnFocus: true }
-  );
+  const {
+    data: hospitalsData,
+    error,
+    isLoading,
+    isValidating,
+  } = useSWR(`${apiUrl}/api/v1/finder?q=${encodedSearchQuery}`, findHospitals, {
+    revalidateOnFocus: true,
+  });
 
   if (!encodedSearchQuery) {
     router.push("/");
@@ -50,11 +60,25 @@ const Feed = () => {
     return <Spinner />;
   }
 
-  if (!hospitals) {
-    return null;
+  if (error) {
+    return (
+      <section className="feed">
+        <span className="text-xl font-semibold">
+          There was an error fetching the hospitals. Please try again later.
+        </span>
+      </section>
+    );
   }
 
-  if (typeof searchQuery === "string" && searchQuery?.length >= 3) {
+  if (!hospitalsData) {
+    return (
+      <section className="feed">
+        <span className="text-xl font-semibold">
+          No results found for:{" "}
+          <span className="font-semibold">{searchQuery}</span>
+        </span>
+      </section>
+    );
   }
 
   return (
@@ -64,7 +88,7 @@ const Feed = () => {
         <span className="font-semibold">{searchQuery}</span>
       </span>
 
-      <HospitalCardList hospitals={hospitals} />
+      <HospitalCardList hospitalsData={hospitalsData?.data} />
     </section>
   );
 };
